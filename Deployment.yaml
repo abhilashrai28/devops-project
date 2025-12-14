@@ -1,3 +1,6 @@
+########################################
+# DEPLOYMENT
+########################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,28 +9,111 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: demo-app
+      app: demo-deploy
   template:
     metadata:
       labels:
-        app: demo-app
+        app: demo-deploy
     spec:
       containers:
-      - name: demo-container
+      - name: nginx
         image: nginx:latest
         ports:
         - containerPort: 80
+
 ---
+########################################
+# REPLICASET
+########################################
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: demo-replicaset
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-rs
+  template:
+    metadata:
+      labels:
+        app: demo-rs
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+
+---
+########################################
+# DAEMONSET
+########################################
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: demo-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: demo-ds
+  template:
+    metadata:
+      labels:
+        app: demo-ds
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+
+---
+########################################
+# STATEFULSET
+########################################
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: demo-statefulset
+spec:
+  serviceName: stateful-headless
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-sts
+  template:
+    metadata:
+      labels:
+        app: demo-sts
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+########################################
+# SERVICE (LOADBALANCER)
+########################################
 apiVersion: v1
 kind: Service
 metadata:
   name: demo-service
 spec:
+  type: LoadBalancer
   selector:
-    app: demo-app
-  type: LoadBalancer   # Exposes service externally
+    app: demo-deploy
   ports:
   - protocol: TCP
-    port: 30080       # External port for the service
-    targetPort: 80    # Port on the pod container
+    port: 8080
+    targetPort: 80
 
